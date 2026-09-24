@@ -27,7 +27,7 @@ Dependencies are pinned in `requirements.txt`.
    cd book-fetch-agent
    ```
 
-2. Create a virtual environment and install dependencies:
+2. Create a virtual environment, activate it, and install the pinned dependencies from the `requirements.txt` file in the repo:
 
    ```bash
    python3.14 -m venv env
