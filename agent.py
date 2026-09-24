@@ -7,18 +7,21 @@ Usage:
     python agent.py "The indispensable Calvin and Hobbes"
 """
 
+import itertools
 import json
+import logging
 import sys
+import threading
+import time
 from datetime import date
 
 from dotenv import load_dotenv
 from langchain.agents import create_agent
 from pydantic import BaseModel
 
-from tools import search_book, search_book_openlibrary, search_book_tavily
-
 load_dotenv()
 
+from tools import search_book, search_book_openlibrary, search_book_tavily
 
 SYSTEM_PROMPT = """
     You are a Book Information Retrieval Agent. Your only job is to find accurate, factual information about a book given its title and return it in a structured format.
@@ -74,10 +77,43 @@ agent = create_agent(
 
 
 def main() -> None:
+    logging.getLogger("google_genai").setLevel(logging.ERROR)
+
     title = " ".join(sys.argv[1:]).strip() or "The indispensable Calvin and Hobbes"
-    result = agent.invoke({"messages": [{"role": "user", "content": title}]})
-    text = result["messages"][-1].content_blocks[0]["text"]
-    print(json.dumps(json.loads(text), indent=2))
+    stop = (
+        threading.Event()
+    )  # a flag shared between threads; starts False, used to signal the spinner to stop
+    spinner = threading.Thread(target=_spinner, args=(stop,), daemon=True)
+    # creates a background thread that will run _spinner(stop); daemon=True means it won't block program exit
+    spinner.start()  # starts the spinner thread running concurrently with main()
+    try:
+        result = agent.invoke({"messages": [{"role": "user", "content": title}]})
+    finally:
+        stop.set()  # signals the Event, telling the spinner loop to stop on its next check
+        spinner.join()  # blocks main() until the spinner thread actually finishes and exits
+        clear_line()  # commented out — would erase the spinner text from the terminal line
+    print(json.dumps(result["structured_response"].model_dump(mode="json"), indent=2))
+
+
+def _spinner(stop: threading.Event) -> None:
+    # for frame in itertools.cycle(['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']):
+    for frame in itertools.cycle(["|", "/", "-", "\\"]):
+        # itertools.cycle repeats the list forever, so frame loops: | then / then - then \ then | again...
+        if stop.is_set():  # check whether main() has signaled us to stop
+            break  # exit the loop (and thus the thread) if the stop flag is set
+        sys.stderr.write(f"\rWorking... {frame}")
+        # \r moves the cursor to the start of the line, so each frame overwrites the previous one (no newline)
+        sys.stderr.flush()  # forces the write to appear immediately instead of sitting in a buffer
+        time.sleep(
+            0.1
+        )  # wait 100ms before drawing the next frame, controlling animation speed
+
+
+def clear_line() -> None:
+    sys.stderr.write(
+        "\r\033[K"
+    )  # \r returns cursor to line start; \033[K is an ANSI code that clears to end of line
+    sys.stderr.flush()  # flush so the clear happens immediately
 
 
 if __name__ == "__main__":

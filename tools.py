@@ -3,6 +3,7 @@ import time
 
 import httpx
 from langchain_core.tools import tool
+from tavily import TavilyClient
 
 from helpers import LANGUAGE_MAP, _authors, _format_results, _normalize_date
 
@@ -113,12 +114,6 @@ def search_book_openlibrary(title: str) -> str:
     return _format_results(results, year_only=True)
 
 
-from langchain.tools import tool
-from tavily import TavilyClient
-
-tavily_client = TavilyClient()
-
-
 @tool
 def search_book_tavily(title: str) -> str:
     """
@@ -130,7 +125,7 @@ def search_book_tavily(title: str) -> str:
     """
 
     try:
-        data = tavily_client.search(
+        data = TavilyClient().search(
             query=f"{title} book author publisher page count language original publication date"
         )
     except Exception as e:

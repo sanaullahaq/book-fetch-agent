@@ -18,7 +18,7 @@ Book Fetch Agent turns a book title into structured metadata (title, author, pub
 
 ## Setup
 
-Note: there is no committed `requirements.txt` or `pyproject.toml`; dependencies are installed directly into the `env/` virtualenv that ships with the repo. The steps below recreate that environment.
+Dependencies are pinned in `requirements.txt`.
 
 1. Clone the repository:
 
@@ -32,7 +32,7 @@ Note: there is no committed `requirements.txt` or `pyproject.toml`; dependencies
    ```bash
    python3.14 -m venv env
    source env/bin/activate
-   pip install langchain langchain-google-genai langchain-core pydantic httpx python-dotenv tavily-python
+   pip install -r requirements.txt
    ```
 
 3. Create a `.env` file at the project root (`.gitignore` excludes it). Settings read at runtime via `load_dotenv()`:
@@ -57,6 +57,8 @@ Run the CLI with a book title as arguments (defaults to a demo title if none giv
 ```bash
 python agent.py "The indispensable Calvin and Hobbes"
 ```
+
+Code is split across three modules: `agent.py` (entry point, agent definition, `BookInfo` schema), `tools.py` (the three search tools), and `helpers.py` (language map and result formatting).
 
 The agent prints the structured `BookInfo` record as JSON, e.g.:
 
