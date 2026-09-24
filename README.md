@@ -6,6 +6,8 @@ Packaged LLM agent that returns structured book metadata for a given title.
 
 Book Fetch Agent turns a book title into structured metadata (title, author, publisher, page count, language, published date) using an LLM agent backed by multiple data sources. It exists because no single free book API reliably covers all titles: Google Books is tried first, Open Library is a fallback, and Tavily web search is the last resort for obscure, non-English, or very recent books. The agent returns a validated, typed record (or a `not_found` result) instead of a free-form text answer.
 
+This agent is used as a core AI feature in the [bookly-backend](https://github.com/sanaullahaq/bookly-backend) project.
+
 ## Tech Stack
 
 - **Language**: Python 3.14
